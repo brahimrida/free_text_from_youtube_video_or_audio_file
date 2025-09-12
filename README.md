@@ -100,3 +100,13 @@ Here’s the section you can copy directly:
 
 ---
 
+## 📂 Example Files
+
+The project includes an **`audio.wav`** file, which is an example taken from a **Chef Gordon Ramsay cooking session on YouTube**.
+
+* This file was generated from the video.
+* The **`generated_output.txt`** file contains the full transcription of Chef Ramsay’s cooking session.
+
+---
+
+
