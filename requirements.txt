@@ -1,0 +1,4 @@
+pytubefix==9.5.0
+torch==2.8.0
+torchaudio==2.8.0
+transformers==4.56.1
