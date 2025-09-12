@@ -1,78 +1,32 @@
+import os
 import sys
 import torch
-from pytubefix import YouTube
 from transformers import (WhisperProcessor, WhisperForConditionalGeneration)
-
-from helpers.transcript_long_audio import *
+from helpers.audio_chunks_transcriber import transcribe_chunks
+from helpers.audio_splitter import split_audio_ffmpeg
+from helpers.error_message import error_message, args_missing_count
+from helpers.get_youtube_video_audio import get_youtube_video_audio
 
 device = "cuda:0" if torch.cuda.is_available() else "cpu"
 
-
-# ---------------------------
-# Load Whisper Model
-# ---------------------------
-whisper_model_name = "openai/whisper-tiny"  # small, multilingual
-whisper_processor = WhisperProcessor.from_pretrained(whisper_model_name)
-whisper_model = WhisperForConditionalGeneration.from_pretrained(whisper_model_name).to(device)
-
-
-def get_youtube_video_audio(link, out_file="audio.wav") -> str or None:
-    yt = YouTube(link)
-    audio_stream = yt.streams.filter(only_audio=True).first()
-    temp_file = audio_stream.download(filename="temp_audio")  # keeps original extension
-    if temp_file is None:
-        print("null file")
-        return None
-    # convert to mono 16kHz wav using ffmpeg
-    subprocess.run([
-        "ffmpeg",
-        "-y",
-        "-i", temp_file,
-        "-ac", "1",  # mono
-        "-ar", "16000",  # 16kHz
-        out_file
-    ], check=True)
-
-    # remove temp file
-    os.remove(temp_file)
-    return out_file
-
-
-def load_audio(audio_path):
-    """Load audio file and resample to 16kHz"""
-    speech, sr = torchaudio.load(audio_path)
-    # If stereo, convert to mono by averaging channels
-    if speech.shape[0] > 1:
-        speech = speech.mean(dim=0, keepdim=True)
-    resampler = torchaudio.transforms.Resample(sr, 16000)
-    speech = resampler(speech)
-    return speech.squeeze()
-
-def get_transcription_whisper(audio_path, model, processor, language="english"):
-    speech = load_audio(audio_path)
-    input_features = processor(
-        speech, return_tensors="pt", sampling_rate=16000
-    ).input_features.to(device)
-    forced_decoder_ids = processor.get_decoder_prompt_ids(
-        language=language, task="transcribe"
-    )
-    predicted_ids = model.generate(input_features, forced_decoder_ids=forced_decoder_ids)
-    transcription = processor.batch_decode(predicted_ids, skip_special_tokens=True)
-    return transcription
-
-# ---------------------------
-# Demo
-# ---------------------------
+USAGE = """
+usage:
+python speech_demo.py <Youtube video link or audio file path> <flag> <chunks-output-directory-path>
+full command example for youtube video text: 
+python speech_demo.py https://youtu.be/LzInU71ljJQ?si=_xxxLVIdNDvfBT8d -y C:/path-to-folder/chunks/
+full command example for remote/local audio text: 
+python speech_demo.py C:/path-to-audio/audio-file.wav OR https//:www.example.com/audio.wav -u C:/path-to-folder/chunks/
+flags: 
+-y | for youtube link
+-u | for audio path
+"""
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 4:
-        print("""
-        usage: python speech_demo.py <Youtube video link or audio file path> <flag> <chunks-output-directory-path>
-        flags: 
-        -y | for youtube link
-        -u | for local & remote paths
-        """)
+    number_of_args = len(sys.argv)
+    if number_of_args != 4:
+        left = args_missing_count(number_of_args)
+        error_message(f"You are missing {left} arguments", USAGE)
         sys.exit(1)
 
     url = sys.argv[1]
@@ -86,10 +40,13 @@ if __name__ == "__main__":
     elif flag == "-u":
         audio_url = url
     else:
+        error_message(f"the flag {flag} should be one of these two [-y | -u]", USAGE)
         sys.exit(1)
 
-    # print("Running Wav2Vec2...")
-    # print(get_transcription_wav2vec2(audio_url, wav2vec2_model, wav2vec2_processor))
+    # Load Whisper Model
+    whisper_model_name = "openai/whisper-tiny"  # small, multilingual
+    whisper_processor = WhisperProcessor.from_pretrained(whisper_model_name)
+    whisper_model = WhisperForConditionalGeneration.from_pretrained(whisper_model_name).to(device)
 
     split_audio_ffmpeg(input_file=url, output_dir=audio_chunks_path)
     generated_output = transcribe_chunks(chunks_dir=audio_chunks_path, model=whisper_model, processor=whisper_processor)
@@ -97,4 +54,6 @@ if __name__ == "__main__":
     print("-" * 40, "START", "-" * 40)
     print(generated_output)
     print("-" * 40, "END", "-" * 40)
-
+    with open("generated_output.txt", "w") as file:
+        file.write(generated_output)
+        file.close()
