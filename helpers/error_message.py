@@ -6,4 +6,4 @@ def error_message(message: str, usage: str):
 
 
 def args_missing_count(args_length: int) -> int:
-    return 4 - args_length
+    return 3 - args_length
