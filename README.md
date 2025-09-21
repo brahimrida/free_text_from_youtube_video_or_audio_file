@@ -28,6 +28,41 @@ git clone https://github.com/brahimrida/free_text_from_youtube_video_or_audio_fi
 
 ---
 
+
+## 🎥 Install FFMPEG
+
+This project requires **FFMPEG** to handle video and audio processing.
+
+### Windows (with Chocolatey)
+
+If you have [Chocolatey](https://chocolatey.org/install) installed, simply run:
+
+```bash
+choco install ffmpeg
+```
+
+### macOS (with Homebrew)
+
+```bash
+brew install ffmpeg
+```
+
+### Linux (Debian/Ubuntu)
+
+```bash
+sudo apt update
+sudo apt install ffmpeg
+```
+
+After installation, verify with:
+
+```bash
+ffmpeg -version
+```
+
+---
+
+
 ## 🐍 Python Virtual Environment Setup (Windows)
 
 1. Open **PowerShell** or **CMD**.
