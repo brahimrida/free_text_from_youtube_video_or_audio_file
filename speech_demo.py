@@ -68,6 +68,6 @@ if __name__ == "__main__":
     print("-" * 40, "START", "-" * 40)
     print(generated_output)
     print("-" * 40, "END", "-" * 40)
-    with open("generated_output.txt", "w") as file:
+    with open("flag_y/generated_output.txt", "w") as file:
         file.write(generated_output)
         file.close()

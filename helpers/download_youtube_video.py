@@ -7,9 +7,9 @@ from pytubefix import YouTube
 def download_youtube_video(link) -> Optional[str]:
     vid_name = "downloaded_youtube_video.mp4"
     aud_name = "downloaded_youtube_audio.mp3"
-    saved_video_dir = "saved_video/"
+    saved_video_dir = "flag_v/saved_video/"
+    os.makedirs(saved_video_dir, exist_ok=True)
     yt = YouTube(link)
-
     video_stream = yt.streams.filter(res="1080p", only_video=True).first()
     audio_stream = yt.streams.filter(only_audio=True).first()
 
@@ -20,7 +20,7 @@ def download_youtube_video(link) -> Optional[str]:
         print("Failed to download youtube video")
         return None
 
-    combined_file = saved_video_dir + "full_video.mp4"
+    combined_file = saved_video_dir + video_stream.title
 
     cmd = [
         "ffmpeg",
